@@ -2,8 +2,8 @@
 // définition des fonctions
 
 // récupère un produit avec son id depuis l'API ✅    
-function getProductFromAPI(productId) {
-    return fetch(`http://localhost:3000/api/products/${productId}`)
+function getProductFromAPI(id) {
+    return fetch(`http://localhost:3000/api/products/${id}`)
         .then(function(res) {
             return res.json()
         })
@@ -14,12 +14,7 @@ function getProductFromAPI(productId) {
             alert("Nous sommes désolés, un problème est survenu sur nos serveurs, veuillez réessayer plys tard")
             return
         })
-}
-
-// récupération l'id du produit depuis l'URL qui a amené le user depuis la page d'accueil ✅
-function getProductId() {
-    return new URL(location.href).searchParams.get("id")        
-}
+} 
 
 /**
  * Objective => display these products in the DOM ✅
@@ -44,73 +39,98 @@ function updateDisplayWithProduct(product) {
         colorOption.value = color;
         colorOption.innerText = color;
         colorsWrapper.appendChild(colorOption);
-    });
+    });   
+}
 
-    //intègration du lien de la page cart.html dans le button
-    const buttonWrapper = document.getElementsByClassName('item__content__addButton')[0]
-    const buttonCart = document.getElementById('addToCart')
-    const removeChild = buttonWrapper.removeChild(buttonCart)
-    const lienToCart = document.createElement('a')
-    lienToCart.href = "cart.html"
-    const newButton = document.createElement('button')
-    newButton.id = 'addToCart'
-    newButton.innerText = 'Ajouter au panier'
-    buttonWrapper.appendChild(lienToCart)
-    lienToCart.appendChild(newButton)
-    
-    
-
-    /**objectif => pushing button to add dom's value in localStorage 
-    *  objectif => get localstorage to view if have value
-    */
-
-    // name dom's values to pushed in localstorage
-    addToCart.onclick = () => {
-        const optionProduct = {
-            image: img.src,
-            nomProduit: productName,
-            couleur: colorsWrapper.value,
-            prix: productPrice,
-            quantité: quantity.value,
-            id: product._id, 
-        }
-        
-       
-        let productSavInLocalStorage = JSON.parse(localStorage.getItem("produit"));
-
-        if(productSavInLocalStorage == null) { 
-            productSavInLocalStorage = [];
-            productSavInLocalStorage.push(optionProduct);
-            localStorage.setItem("produit", JSON.stringify(productSavInLocalStorage));
-            console.log(productSavInLocalStorage);                     
-        }else {
-            for (i = 0; i < productSavInLocalStorage.length; i++) {
-                if(productSavInLocalStorage[i]._id == optionProduct._id && productSavInLocalStorage[i].couleur == colorsWrapper.value){
-                    
-                    return (
-                        productSavInLocalStorage[i].quantité++,
-                        
-                        /* productSavInLocalStorage[i].quantité + quantity.value,
-                        console.log(productSavInLocalStorage[i].quantité += quantity.value), */
-                        localStorage.setItem("produit", JSON.stringify(productSavInLocalStorage))
-                    )
-                }else {
-                    productSavInLocalStorage.push(optionProduct);
-                    localStorage.setItem("produit", JSON.stringify(productSavInLocalStorage));
-                }
-                
-            }
-            
-        }                            
+function validateUserInput(product, quantitySelected, selectedColor) {
+    let validated = true;
+    // input validation
+    if (!product.colors.includes(selectedColor)) {
+        window.alert("La couleur sélectionnée n'est pas valide");
+        validated = false;
     }
+    if (quantitySelected <= 0) {
+        window.alert("Vous devez sélectionner au moins un produit");
+        validated = false;
+    }
+    if (quantitySelected > 100) {
+        window.alert("Waouh, vous aimez beaucoup nos canapés ! Merci, mais nous ne pouvons vous en fournir plus de cent à la fois :)");
+        validated = false;
+    }
+    return validated;
+}
+
+/**
+ * if a given product already exists in the products array,
+ * we update its quantity by adding the quantity of this product selected by the user
+ */
+function addQuantityToExistingProduct(products, selectedProduct) {
+    const previouslySelectedProduct = products.find(product => product.id == selectedProduct.id && product.color == selectedProduct.color);
+    const previouslySelectedProductIdx = products.findIndex(product => product.id == selectedProduct.id && product.color == selectedProduct.color);
+    if (previouslySelectedProduct != undefined) {
+        previouslySelectedProduct.quantity += selectedProduct.quantity;
+        products[previouslySelectedProductIdx] = previouslySelectedProduct;
+    }
+    return products;
+}
+
+function addProductToCartIfNotExists(products, selectedProduct) {
+    const previouslySelectedProduct = products.find(product => product.id == selectedProduct.id && product.color == selectedProduct.color);
+    if (previouslySelectedProduct == undefined) {
+        products.push(selectedProduct);
+    }
+    return products;
+}
+
+function addProductToLocalStorage(product) {
+    // on récupère l'input utilisateur
+    const quantitySelected = parseInt(document.getElementById("quantity").value);
+    const selectedColor = document.getElementById('colors').value;
+    if (!validateUserInput(product, quantitySelected, selectedColor)) {
+        return; // on n'exécute pas le reste du code si l'input utilisateur n'est pas valide
+    }
+    const selectedProduct = {
+        id: product._id, 
+        quantity: quantitySelected,
+        color: selectedColor
+        // TODO add necessary fields for processing in cart page
+    }
+    // objective => check if product already in local storage
+    const localStorageCart = localStorage.getItem("cart");
+    let cart = [];
+    if (localStorageCart != null) {
+        cart = JSON.parse(localStorageCart);
+        cart = addQuantityToExistingProduct(cart, selectedProduct);
+        cart = addProductToCartIfNotExists(cart, selectedProduct);
+    } else {
+        cart.push(selectedProduct);
+    }
+    localStorage.setItem("cart", JSON.stringify(cart));
+    console.log("Produit ajouté");
+}
+
+function addProductEventListener(product) {
+    const addToCartBtn = document.getElementById("addToCart");
+    addToCartBtn.addEventListener("click", () => {
+        addProductToLocalStorage(product);
+    });                                                                       
 }
 
 
-// utilisation des fonctions
+// utilisation des fonctions dès que la page est chargée
 window.addEventListener("DOMContentLoaded", async () => {
 
-    const productId = getProductId();
-    const product = await getProductFromAPI(productId);
+    // récupération l'id du produit depuis l'URL qui a amené le user depuis la page d'accueil ✅
+    const url = new URL(window.location.href);
+    const id = url.searchParams.get("id");       
+    
+    // récupération du produit depuis l'API
+    const product = await getProductFromAPI(id);
+
+    // affichage du produit
     updateDisplayWithProduct(product);
+
+    // event listener
+    addProductEventListener(product);
 
 });
