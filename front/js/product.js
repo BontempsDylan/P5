@@ -92,7 +92,10 @@ function addProductToLocalStorage(product) {
     const selectedProduct = {
         id: product._id, 
         quantity: quantitySelected,
-        color: selectedColor
+        color: selectedColor,
+        name: product.name,
+        price: product.price,
+        img: product.imageUrl,
         // TODO add necessary fields for processing in cart page
     }
     // objective => check if product already in local storage
