@@ -1,10 +1,4 @@
 
-// console.log("synchronous code 1")
-// setTimeout(() => {
-//     console.log("asynchronous code")
-// });
-// console.log("synchronous code 2")
-
 // TODO research => you can use "load" or "DOMContentLoaded" events
 window.addEventListener("DOMContentLoaded", async () => {
 
