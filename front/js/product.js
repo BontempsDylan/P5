@@ -7,14 +7,18 @@ function getProductFromAPI(id) {
         .then(function(res) {
             return res.json()
         })
-        .then(function(product) {
-            return product;
-        })
-        .catch(function(error) {
-            alert("Nous sommes désolés, un problème est survenu sur nos serveurs, veuillez réessayer plys tard")
-            return
-        })
 } 
+
+const getProductData = (id) => {
+    if (id == undefined) {
+        window.alert("Erreur lors de la récupération des données du produit"); 
+        stop
+    }else{
+        return getProductFromAPI();
+    }
+    
+  };
+  
 
 /**
  * Objective => display these products in the DOM ✅
@@ -128,6 +132,8 @@ window.addEventListener("DOMContentLoaded", async () => {
     
     // récupération du produit depuis l'API
     const product = await getProductFromAPI(id);
+
+    getProductData()
 
     // affichage du produit
     updateDisplayWithProduct(product);
