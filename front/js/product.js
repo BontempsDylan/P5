@@ -9,14 +9,12 @@ function getProductFromAPI(id) {
         })
 } 
 
-const getProductData = (id) => {
-    if (id == undefined) {
-        window.alert("Erreur lors de la récupération des données du produit"); 
-        stop
+function getProductData(product) {
+     if (product._id == undefined) {
+        window.alert("L'objet séléctionné n'existe pas, retourner a l'accueil pour en choisir un autre");  
     }else{
         return getProductFromAPI();
     }
-    
   };
   
 
@@ -43,7 +41,8 @@ function updateDisplayWithProduct(product) {
         colorOption.value = color;
         colorOption.innerText = color;
         colorsWrapper.appendChild(colorOption);
-    });   
+    });  
+    console.log(product._id); 
 }
 
 function validateUserInput(product, quantitySelected, selectedColor) {
@@ -133,7 +132,7 @@ window.addEventListener("DOMContentLoaded", async () => {
     // récupération du produit depuis l'API
     const product = await getProductFromAPI(id);
 
-    getProductData()
+    getProductData(product)
 
     // affichage du produit
     updateDisplayWithProduct(product);
